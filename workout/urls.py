@@ -1,4 +1,4 @@
-"""workout_v2 URL Configuration
+"""workout URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.0/topics/http/urls/
@@ -15,18 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from workout import views
-from django.conf import settings
-from django.conf.urls.static import static
-
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('user_reg/', views.UserRegistration.as_view(), name='user_reg'),
-    path('physician_reg/', views.PhysicianRegistration.as_view(), name='physician_reg'),
-    path('login_user/', views.LoginUser.as_view(), name='login_user'),
 ]
-if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root = settings.STATIC_ROOT)
-    urlpatterns += static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
-
