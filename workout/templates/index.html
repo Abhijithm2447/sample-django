@@ -1,0 +1,19 @@
+{% for album in all_albums %}
+    <a href="#" >
+        <img src="{{ album.profile_pic.url }}" >
+    </a>
+
+    {{ album.album_title }}
+{% endfor %}
+
+
+<form method="POST" enctype="multipart/form-data" action="{% url 'test' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {{profile_form.as_p}}
+    <button type="submit" >Submit</button>
+</form>
+
+{% if result %}
+    Result: {{result}}
+{% endif %}
