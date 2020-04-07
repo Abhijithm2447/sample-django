@@ -553,7 +553,7 @@ class ListGymMembers(HttpresponseMixin, SerializerMixin, View):
             for user in obj_user_msmsp:
                 tmp = {
                     "user_id" : user.user.id,
-                    'user' : user.user.first_name +" " + user.user.first_name,
+                    'user' : user.user.first_name +" " + user.user.last_name,
                     'joining_date' : user.joining_date.strftime("%d %b, %Y"),
                     'plan' : user.plan,
                     'vallet' : user.vallet,
