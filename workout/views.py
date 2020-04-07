@@ -2,13 +2,13 @@ from django.shortcuts import render
 from django.views.generic import View
 from workout.mixins import HttpresponseMixin, SerializerMixin, is_json
 from workout.models import DoctorProfileDB
-from workout.forms import ExtendedUserCreationForm, DoctorProfileForm
+from workout.forms import ExtendedUserCreationForm, DoctorProfileForm, UserProfileForm, UserMemspForm
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 # model
-from workout.models import UserProfileDB, DoctorProfileDB, GymExpertProfileDB, AdminProfileDB
+from workout.models import UserProfileDB, DoctorProfileDB, GymExpertProfileDB, AdminProfileDB, UserMembershipDB
 
 # common
 import base64
@@ -58,7 +58,8 @@ class UserRegistration(HttpresponseMixin, SerializerMixin, View):
         error = []
         messsage = []
         flag = True
-        data = request.body                
+        data = request.body  
+        # pdb.set_trace()              
         if is_json(data):
             data = json.loads(data)
             if "username" in data:
@@ -109,11 +110,12 @@ class UserRegistration(HttpresponseMixin, SerializerMixin, View):
 
             if form.is_valid():            
                 user = form.save()
-                print(user)
+                print(user, user.id)
                 result['user_creation'] = True 
+                result['user_id'] = user.id 
                 status = 200                      
             if form.errors:   
-                status = 402         
+                status = 400        
                 error.append(form.errors)
         else:
             status = 400
@@ -317,3 +319,251 @@ class LoginUser(HttpresponseMixin, SerializerMixin, View):
             status = 400
         json_data = json.dumps({'result':result, 'error':error, 'message': messsage})        
         return self.render_to_http_response(json_data, status=status)
+#____________________________________________________________________________________
+# User Profile api
+#____________________________________________________________________________________
+# url: user_prof_reg/
+# input
+# =====
+# {
+    # "user_id" : 16,
+    # "prof_pic" : "",
+    # "d_o_b" : "",
+    # "phone" : "",
+    # "blood_group" : "",
+    # "gender" : ""
+# }
+#____________________________________________________________________________________
+@method_decorator(csrf_exempt, name='dispatch')
+class UserProfReg(HttpresponseMixin, SerializerMixin, View):
+    def get(self, request, *args, **kwargs):        
+        profile_form = DoctorProfileForm()
+        context = {
+                    'profile_form':profile_form
+                }
+        return render(request, "index.html", context)
+    def post(self, request, *args, **kwargs):
+        result = {}
+        error = []
+        messsage = []          
+        flag = True                       
+        data = request.body        
+        if is_json(data):
+            data = json.loads(data)
+            if "user_id" in data:
+                user_id = int(data["user_id"])
+            else:
+                flag = False                
+                error.append("user_id is not given")
+            if "profile_pic" in data and data["profile_pic"] != "":
+                profile_pic = data["profile_pic"]
+                profile_pic_f = True
+            else:
+                profile_pic_f = False 
+                profile_pic = " "                          
+                error.append("profile_pic is not given")
+            if "d_o_b" in data and data["d_o_b"] != "":
+                d_o_b = data["d_o_b"]
+            else: 
+                d_o_b = ''                        
+                error.append("d_o_b is not given")
+            if "phone" in data and data["phone"] != "":
+                phone = data["phone"]
+            else: 
+                phone = " "                          
+                error.append("phone is not given")
+            if "blood_group" in data and data["blood_group"] != "":
+                blood_group = data["blood_group"]
+            else:  
+                blood_group = ' '                         
+                error.append("blood_group is not given")
+            if "gender" in data and data["gender"] != "":
+                gender = data["gender"]
+            else:
+                gender = ' '            
+                error.append("gender is not given")  
+        else:
+            error.append("Invalid json")
+            status = 400
+            
+        if flag:
+            if profile_pic_f:             
+                try:
+                    profile_im = Image.open(BytesIO(base64.b64decode(base64.b64decode(profile_pic))))
+                    path_image = os.path.join(path_profile_pic, str(user_id)+".png")                
+                except:
+                    error.append("Cant decode image. Base64 encoding error. Please encode your image in two times.")
+            
+            user = User.objects.get(id=user_id)            
+            form_data = {                
+                "user" : user,
+                "group": "user",
+                "profile_pic" : profile_pic,
+                "d_o_b" : d_o_b,
+                "phone" : phone,
+                "blood_group" : blood_group,
+                "gender" : gender,
+            }      
+                
+            profile_form = UserProfileForm(form_data)
+            
+            if profile_form.is_valid():               
+                status = 200
+                profile = profile_form.save()
+
+                if profile:
+                    result['user_profile_creation'] = True
+                else:
+                    result['user_profile_creation'] = False
+            else:
+                status = 400                       
+            if profile_form.errors:   
+                status = 400        
+                error.append(profile_form.errors)
+        else:            
+            status = 400
+        json_data = json.dumps({'result':result, 'error':error, 'message': messsage})
+        return self.render_to_http_response(json_data, status=status)
+#____________________________________________________________________________________
+#____________________________________________________________________________________
+# User Membership API
+#____________________________________________________________________________________
+# url: user_memsp_reg/
+# input
+# =====
+# {
+    # "user_id" : 32,
+    # "joining_date" : "2020-02-20",
+    # "plan" : "premium",
+    # "vallet" : "200",
+    # "expery_date" : "2020-08-20",
+# }
+#____________________________________________________________________________________
+@method_decorator(csrf_exempt, name='dispatch')
+class UserMemSpReg(HttpresponseMixin, SerializerMixin, View):
+    def get(self, request, *args, **kwargs):        
+        profile_form = DoctorProfileForm()
+        context = {
+                    'profile_form':profile_form
+                }
+        return render(request, "index.html", context)
+    def post(self, request, *args, **kwargs):
+        result = {}
+        error = []
+        messsage = []          
+        flag = True                       
+        data = request.body        
+        if is_json(data):
+            data = json.loads(data)
+            if "user_id" in data:
+                user_id = int(data["user_id"])
+            else:
+                flag = False                
+                error.append("user_id is not given")
+            if "joining_date" in data and data["joining_date"] != "":
+                joining_date = data["joining_date"]                
+            else:
+                flag = False                                         
+                error.append("joining_date is not given")
+            if "plan" in data and data["plan"] != "":
+                plan = data["plan"]
+            else:  
+                flag = False                                       
+                error.append("plan is not given")
+            if "vallet" in data and data["vallet"] != "":
+                vallet = data["vallet"]
+            else:  
+                flag = False                                         
+                error.append("vallet is not given")
+            if "expery_date" in data and data["expery_date"] != "":
+                expery_date = data["expery_date"]
+            else: 
+                flag = False                                           
+                error.append("expery_date is not given")             
+        else:
+            flag = False
+            error.append("Invalid json")
+            status = 400
+            
+        if flag:                        
+            user = User.objects.get(id=user_id) 
+            print(user)           
+            form_data = {                
+                "user" : user,
+                "joining_date": joining_date,
+                "plan" : plan,
+                "vallet" : vallet,
+                "expery_date" : expery_date,
+            }      
+                
+            profile_form = UserMemspForm(form_data)
+            
+            if profile_form.is_valid():               
+                status = 200
+                profile = profile_form.save()
+
+                if profile:
+                    result['memsp_creation'] = True
+                else:
+                    result['memsp_creation'] = False
+            else:
+                status = 400                       
+            if profile_form.errors:   
+                status = 400        
+                error.append(profile_form.errors)
+        else:            
+            status = 400
+        json_data = json.dumps({'result':result, 'error':error, 'message': messsage})
+        return self.render_to_http_response(json_data, status=status)
+#____________________________________________________________________________________
+#____________________________________________________________________________________
+#____________________________________________________________________________________
+# List Gym Members
+#____________________________________________________________________________________
+# url: list_gym_members/
+# input
+# =====
+# {
+    # "user_id" : 32,
+    # "joining_date" : "2020-02-20",
+    # "plan" : "premium",
+    # "vallet" : "200",
+    # "expery_date" : "2020-08-20",
+# }
+#____________________________________________________________________________________
+@method_decorator(csrf_exempt, name='dispatch')
+class ListGymMembers(HttpresponseMixin, SerializerMixin, View):
+    def get(self, request, *args, **kwargs):        
+        profile_form = DoctorProfileForm()
+        context = {
+                    'profile_form':profile_form
+                }
+        return render(request, "index.html", context)
+    def post(self, request, *args, **kwargs):
+        result = {}
+        error = []
+        messsage = []          
+        flag = True                               
+            
+        if flag:  
+            status = 200          
+            # pdb.set_trace()
+            obj_user_msmsp = UserMembershipDB.objects.order_by('expery_date') 
+            list_user = []
+            for user in obj_user_msmsp:
+                tmp = {
+                    "user_id" : user.user.id,
+                    'user' : user.user.first_name +" " + user.user.first_name,
+                    'joining_date' : user.joining_date.strftime("%d %b, %Y"),
+                    'plan' : user.plan,
+                    'vallet' : user.vallet,
+                    'expery_date' : user.expery_date.strftime("%d %b, %Y")
+                }
+                list_user.append(tmp)
+                
+            result['list_memsp'] = list_user                                             
+        else:            
+            status = 400
+        json_data = json.dumps({'result':result, 'error':error, 'message': messsage})
+        return self.render_to_http_response(json_data, status=status)
+#____________________________________________________________________________________

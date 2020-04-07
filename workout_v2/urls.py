@@ -24,7 +24,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('user_reg/', views.UserRegistration.as_view(), name='user_reg'),
     path('physician_reg/', views.PhysicianRegistration.as_view(), name='physician_reg'),
+    path('user_prof_reg/', views.UserProfReg.as_view(), name='user_prof_reg'),
+    path('user_memsp_reg/', views.UserMemSpReg.as_view(), name='user_memsp_reg'),
     path('login_user/', views.LoginUser.as_view(), name='login_user'),
+    path('list_gym_members/', views.ListGymMembers.as_view(), name='list_gym_members'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root = settings.STATIC_ROOT)
